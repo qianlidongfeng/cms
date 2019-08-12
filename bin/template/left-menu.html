@@ -1,0 +1,118 @@
+{{block "left-menu2" . -}}
+<div class="list-group">
+    <a href="#" class="list-group-item list-group-item-action collapsed" data-toggle="collapse" data-target="#projects">视图</a>
+    <div id="projects" class="col-12 collapse" data-parent="#list-group">
+        <div class="list-group">
+            <a href="#" id="nihao" class="list-group-item list-group-item-action collapsed" data-toggle="collapse"
+               data-target="#collapseOneOne">视图</a>
+            <div id="collapseOneOne" class="col-12 collapse" data-parent="#nihao">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action">First item</a>
+                    <a href="#" class="list-group-item list-group-item-action">Second item</a>
+                    <a href="#" class="list-group-item list-group-item-action">Third item</a>
+                </div>
+            </div>
+            <a href="#" class="list-group-item list-group-item-action">Second item</a>
+            <a href="#" class="list-group-item list-group-item-action ">Third item</a>
+        </div>
+    </div>
+    <a href="#" class="list-group-item list-group-item-action project">视图管理</a>
+    <a href="#" class="list-group-item list-group-item-action project">项目管理</a>
+    <a href="#" class="list-group-item list-group-item-action users">用户</a>
+</div>
+{{- end}}
+
+{{block "left-menu" . -}}
+<div class="list-group" id="left-menus">
+    {{if lt .group 20}}
+    <a href="#" class="list-group-item list-group-item-action collapsed" data-toggle="collapse"
+       data-target="#menu-controler">菜单</a>
+    <div id="menu-controler" class="col-12 collapse" data-parent="#left-menus">
+        <a href="#" class="list-group-item list-group-item-action bg-warning" data-toggle="modal" id="btn-menu-creater" data-target="#menu-item-editer">创建菜单项</a>
+        <a href="#" class="list-group-item list-group-item-action bg-warning" data-toggle="modal" id="btn-viewer-creater" data-target="#viewer-item-editer">创建视图项</a>
+        <a href="#" class="list-group-item list-group-item-action bg-warning" id="btn-menu-manager" viewer-id="1">菜单管理</a>
+        <a href="#" class="list-group-item list-group-item-action bg-warning" id="btn-viewer-manager" viewer-id="2">视图管理</a>
+        {{if lt .group 10}}
+        <a href="#" class="list-group-item list-group-item-action bg-warning" id="btn-user-manager" viewer-id="3">用户管理</a>
+        {{end}}
+    </div>
+    {{end}}
+    {{range .menuItems}}
+    <a href="#" class="list-group-item list-group-item-action collapsed" data-toggle="collapse" data-target="#menu-item-container-{{.ID}}">{{.Name}}</a>
+    <div id="menu-item-container-{{.ID}}" class="col-12 collapse menu-item-container" menu-id="{{.ID}}" data-parent="#left-menus"></div>
+    {{end}}
+    {{range .viewerItems}}
+        <a href="#" class="list-group-item list-group-item-action viewer-item bg-warning" viewer-id="{{.ID}}">{{.Name}}</a>
+    {{end}}
+</div>
+<script>
+    var menuItemContainerOnshow=function () {
+        if(!$(this).hasClass('show')){
+            var result=$.api.getMenuItem($(this).attr('menu-id'))
+            if(result[0]){
+                var parentID=$(this).attr('id')
+                items=result[1].items
+                if(items!=null){
+                    for(var i=0;i<items.length;i++){
+                        var a=$('<a href="#" class="list-group-item list-group-item-action collapsed" data-toggle="collapse"' + 'data-target="#menu-item-container-'+items[i].id+'">'+items[i].name+'</a>')
+                        $(this).append(a)
+                        var childrenContainer=$('<div id="menu-item-container-'+items[i].id+'"class="col-12 collapse menu-item-container" data-parent="#'+parentID+' "menu-id="'+items[i].id+'"></div>')
+                        childrenContainer.on('show.bs.collapse',menuItemContainerOnshow)
+                        childrenContainer.on('hidden.bs.collapse',function (data){
+                            if($(data.target).attr('id')===$(this).attr('id')){
+                                $(this).html('')
+                            }
+                        })
+                        $(this).append(childrenContainer)
+                    }
+                }
+            }else{
+                message(result[1],'danger')
+            }
+            var result=$.api.getViewerItem($(this).attr('menu-id'))
+            if(result[0]){
+                var parentID=$(this).attr('id')
+                items=result[1].items
+                if(items != null){
+                    for(var i=0;i<items.length;i++){
+                        var a=$('<a href="#" class="list-group-item list-group-item-action viewer-item bg-warning" viewer-id="'+items[i].id+'">'+items[i].name+'</a>')
+                        a.click(function(){
+                            $.viewerData.get($(this).attr('viewer-id'))
+                        })
+                        $(this).append(a)
+                    }
+                }
+            }else{
+                message(result[1],'danger')
+            }
+        }
+    }
+    var menuItemContainer= $('.menu-item-container')
+    menuItemContainer.on('show.bs.collapse',menuItemContainerOnshow)
+    menuItemContainer.on('hidden.bs.collapse',function (data){
+        if($(data.target).attr('id')===$(this).attr('id')){
+            $(this).html('')
+        }
+    })
+    $('.viewer-item').click(function(){
+        $.viewerData.get($(this).attr('viewer-id'))
+    })
+</script>
+<script>
+    $('#btn-menu-manager').click(function(){
+        $.viewerData.get($(this).attr('viewer-id'))
+    })
+    $('#btn-viewer-manager').click(function(){
+        $.viewerData.get($(this).attr('viewer-id'))
+    })
+    $('#btn-user-manager').click(function(){
+        $.viewerData.get($(this).attr('viewer-id'))
+    })
+    $('#btn-menu-creater').click(function(){
+        $('#menu-item-editer .ensure').attr('action','add')
+    })
+    $('#btn-viewer-creater').click(function(){
+        $('#viewer-item-editer .ensure').attr('action','add')
+    })
+</script>
+{{- end}}

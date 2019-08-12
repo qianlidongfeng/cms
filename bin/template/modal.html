@@ -1,0 +1,507 @@
+{{define "modal" -}}
+{{block "changePassword" . -}}
+<div class="modal fade" id="change-password-modal" tabindex="-1" role="dialog" aria-labelledby="修改密码"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalCenterTitle">修改密码</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label>旧密码</label>
+                        <input type="password" class="form-control" name="old">
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="password" class="form-control" name="new" placeholder="6-20位">
+                    </div>
+                    <div class="form-group">
+                        <label>再次输入新密码</label>
+                        <input type="password" class="form-control" name="renew" placeholder="6-20位">
+                    </div>
+                    <label class="error-msg text-danger">&nbsp;</label>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure">确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#change-password-modal .ensure').click(function () {
+        var data = $("#change-password-modal form").serialize()
+        var submitData = decodeURIComponent(data, true)
+        $.ajax({
+            url: '/api/password',
+            data: submitData,
+            type: 'PUT',
+            cache: false,//false是不缓存，true为缓存
+            async: true,//true为异步，false为同步
+            success: function (data) {
+                $('#change-password-modal').modal('hide')
+                message(data.msg, 'success')
+            },
+            error: function (err) {
+                message(err.responseJSON.msg, 'danger')
+            }
+        })
+    })
+</script>
+{{- end}}
+
+{{block "menuItemEditer" . -}}
+{{if lt .group 20}}
+<div class="modal fade" id="menu-item-editer" tabindex="-1" role="dialog" aria-labelledby="创建菜单项" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <label>菜单项名称：</label>
+                    <input type="text" class="form-control" name="item-name" placeholder="菜单项名称">
+                    <label>其他允许访问的用户：</label>
+                    <input type="text" class="form-control" name="allow" placeholder="其他允许访问的用户，多个用逗号隔开">
+                </form>
+                <br>
+                <button type="button" class="btn btn-primary selector-creater">父节点选择器</button>
+                <br><br>
+                <div class="parent-selecotrs"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure" action="" menu-id="" >确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#menu-item-editer .selector-creater').click(function () {
+        if (!$.selector.hasUnselectedSelector($('#menu-item-editer .parent-selector'))) {
+            $.selector.createSelector($('#menu-item-editer .parent-selecotrs'), $.selector.getSelectedParentID($('#menu-item-editer .parent-selector'))[0])
+        }
+    })
+    $('#menu-item-editer .ensure').click(function () {
+        if ($.selector.hasUnselectedSelector($('#menu-item-editer .parent-selector'))) {
+            return
+        }
+        var data = decodeURIComponent($("#menu-item-editer form").serialize(), true)
+        var parent=$.selector.getSelectedParentID($('#menu-item-editer .parent-selector'))
+        var parentID = parent[0]
+        var parentNmae=parent[1]
+        data = data + '&parent=' + parentID
+        data = data + '&parentName='+parentNmae
+        if($(this).attr('action')==='add'){
+            $.ajax({
+                url: '/api/menuitem',
+                data: data,
+                method: 'POST',
+                cache: false,
+                async: true,
+                success: function (data) {
+                    $('#menu-item-editer').modal('hide')
+                    message(data.msg, 'success')
+                    $.viewerData.flush()
+                },
+                error: function (err) {
+                    message(err.responseJSON.msg, 'danger')
+                },
+            })
+        }else if($(this).attr('action')==='update'){
+            var id= $(this).attr('menu-id')
+            data= data+ '&menu-id='+id
+            $.ajax({
+                url: '/api/menuitem',
+                data: data,
+                method: 'PUT',
+                cache: false,
+                async: true,
+                success: function (data) {
+                    $('#menu-item-editer').modal('hide')
+                    message(data.msg, 'success')
+                    $.viewerData.flush()
+                },
+                error: function (err) {
+                    message(err.responseJSON.msg, 'danger')
+                },
+            })
+        }
+    })
+    $('#menu-item-editer').on('hidden.bs.modal', function () {
+        $('#menu-item-editer .parent-selecotrs').html('')
+    })
+</script>
+<div class="modal fade" id="viewer-item-editer" tabindex="-1" role="dialog" aria-labelledby="创建视图项" aria-hidden="true" style="overflow:scroll">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">创建视图项</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="viewer-base-info">
+                    <label>视图项名称：</label>
+                    <input type="text" class="form-control" name="item-name" placeholder="视图项名称">
+                    <label>其他允许访问的用户：</label>
+                    <input type="text" class="form-control" name="allow" placeholder="其他允许访问的用户，多个用逗号隔开">
+                </form>
+                <br>
+                <button type="button" class="btn btn-primary selector-creater">父节点选择器</button>
+                <br><br>
+                <div class="parent-selecotrs"></div>
+                <form class="form sql-config">
+                    <div class="form-group form-inline">
+                        <lable>数据库地址：</lable><input type="text" name="address" class="form-control form-control-sm" placeholder="数据库地址">
+                        <lable>数据库密码：</lable><input type="text" name="password" class="form-control form-control-sm" placeholder="数据库密码">
+                    </div>
+                    <div class="form-group form-inline">
+                        <label>数据库名：</label><input type="text" name="database" class="form-control form-control-sm" placeholder="数据库名">
+                        <lable>表名：</lable><input type="text" name="table" class="form-control form-control-sm" placeholder="表名">
+                        <lable>用户名：</lable><input type="text" name="user" class="form-control form-control-sm" placeholder="用户名">
+                    </div>
+                </form>
+                <lable id="sql-check-result" class="text-danger"></lable><br>
+                <button type="button" class="btn btn-primary btn-sm" id="check-sql">连接数据库</button>
+                <button type="button" class="btn btn-primary btn-sm" id="field-creater">添加显示字段</button>
+                <br><br>
+                <div class="form viewer-fields"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure">确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#viewer-item-editer .selector-creater').click(function () {
+        if (!$.selector.hasUnselectedSelector($('#viewer-item-editer .parent-selector'))) {
+            $.selector.createSelector($('#viewer-item-editer .parent-selecotrs'), $.selector.getSelectedParentID($('#viewer-item-editer .parent-selector'))[0])
+        }
+    })
+    $('#viewer-item-editer .ensure').click(function () {
+        if ($.selector.hasUnselectedSelector($('#viewer-item-editer .parent-selector'))) {
+            return
+        }
+        var data = decodeURIComponent($("#viewer-item-editer #viewer-base-info").serialize(), true)
+        var parent=$.selector.getSelectedParentID($('#viewer-item-editer .parent-selector'))
+        var parentID = parent[0]
+        var parentName=parent[1]
+        data = data + '&parent=' + parentID
+        data = data + '&parentName='+parentName
+        data = data+'&'+$.func.getFormData($('.sql-config'))
+        var fields=$.dbFields.viewerFields($('#viewer-item-editer .viewer-fields'))
+        if(fields[1]!=null){
+            return message(fields[1],'danger')
+        }
+        data = data+'&fields='+JSON.stringify(fields[0])
+        if($(this).attr('action')==='add'){
+            $.ajax({
+                url: '/api/vieweritem',
+                data: data,
+                method: 'POST',
+                cache: false,
+                async: true,
+                success: function (data) {
+                    $('#viewer-item-editer').modal('hide')
+                    $.viewerData.flush()
+                    message(data.msg, 'success')
+                },
+                error: function (err) {
+                    message(err.responseJSON.msg, 'danger')
+                },
+            })
+        }else if($(this).attr('action')==='update'){
+            var id= $(this).attr('viewer-id')
+            data= data+ '&viewer-id='+id
+            $.ajax({
+                url: '/api/vieweritem',
+                data: data,
+                method: 'PUT',
+                cache: false,
+                async: true,
+                success: function (data) {
+                    $('#viewer-item-editer').modal('hide')
+                    $.viewerData.flush()
+                    message(data.msg, 'success')
+                },
+                error: function (err) {
+                    message(err.responseJSON.msg, 'danger')
+                },
+            })
+        }
+    })
+
+    $('#check-sql').click(function(){
+        var data=$.func.getFormData($('.sql-config'))
+        $.ajax({
+            url:'/api/databaseField?'+data,
+            method:'GET',
+            async:false,
+            cache:false,
+            success:function(data){
+                $.dbFields.clear()
+                $.dbFields.set(data)
+                $('#sql-check-result').removeClass('text-danger')
+                $('#sql-check-result').addClass('text-success')
+                $('#sql-check-result').text('检查数据库成功')
+            },
+            error:function(err){
+                $.dbFields.clear()
+                $('#sql-check-result').removeClass('text-success')
+                $('#sql-check-result').addClass('text-danger')
+                $('#sql-check-result').text(err.responseJSON.msg)
+            },
+        })
+    })
+    $('#field-creater').click(function(){
+        var fields=$.dbFields.get()
+        if (fields==null){
+            return
+        }
+        var option=''
+        for(var i=0;i<fields.length;i++){
+            option=option+'<option>'+fields[i].name+'</option>'
+        }
+        var scriptID = randomString(8, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        var viewerField=$('<div class="form-group form-inline viewer-field alert"><label>字段名：</label><input type="text" name="field-name"><select class="custom-select custom-select-sm">'+option+'</select><input type="checkbox" class="form-check-input" name="can-order" value="">可排序' +
+            '<input type="radio" name="primary-key">主键<button type="button" class="btn btn-primary btn-sm" name="script-creater" script-id="'+scriptID+'" data-toggle="modal" data-target="#viewer-data-script-editer">脚本</button><textarea class="d-none" name="script-container" id="'+scriptID+'"></textarea><button type="button" class="close" data-dismiss="alert">&times;</button></div>')
+        var scriptCreater=viewerField.children('button[name="script-creater"]')
+        scriptCreater.click(function(){
+            var scriptID=$(this).attr('script-id')
+            var textArea=$('#viewer-data-script-editer textarea')
+            textArea.attr('script-id',scriptID)
+            var script=$('#'+scriptID).val()
+            textArea.val(script)
+        })
+        $('#viewer-item-editer .viewer-fields').append(viewerField)
+    })
+
+    $('#viewer-item-editer').on('hidden.bs.modal', function () {
+        $('#viewer-item-editer .parent-selecotrs').html('')
+        $('#viewer-item-editer .viewer-fields').html('')
+    })
+</script>
+{{end}}
+<script>
+
+</script>
+{{- end}}
+{{block "viewer-data-editer" . -}}
+<div class="modal fade" id="viewer-data-editer" tabindex="-1" role="dialog" aria-labelledby="编辑" aria-hidden="true" >
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="header-title"></h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure">确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#viewer-data-editer').on('hidden.bs.modal', function () {
+        $('#viewer-data-editer .modal-body').html('')
+    })
+    $('#viewer-data-editer').on('shown.bs.modal', function () {
+        $('#viewer-data-editer textarea').each(function () {
+            this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+        })
+    })
+    $('#viewer-data-editer .ensure').click(function(){
+        var textArea=$('#viewer-data-editer textarea')
+        var field=textArea.attr('field')
+        var value=textArea.val()
+        var primary=textArea.attr('primary')
+        var d={}
+        d[field]=($.viewerData.io(field).out(value)).toString()
+        var data={'data':JSON.stringify(d),'primary':primary,'viewer-id':$.viewerData.getVid()}
+        $.ajax({
+            url:'/api/viewerdata',
+            method:'PUT',
+            async:false,
+            cache:false,
+            data:data,
+            success:function(data){
+                $('#viewer-data-editer').modal('hide')
+                message(data['msg'],'success')
+                $.viewerData.flush()
+            },
+            error:function(err){
+                message(err['responseJSON']['msg'],'danger')
+            }
+        })
+    })
+</script>
+<div class="modal fade" id="viewer-data-creater" tabindex="-1" role="dialog" aria-labelledby="添加" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="header-title">添加</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"><form></form></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure">确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#viewer-data-creater').on('hidden.bs.modal', function () {
+        $('#viewer-data-creater form').html('')
+    })
+    $('#viewer-data-creater').on('shown.bs.modal', function () {
+        $('#viewer-data-creater textarea').each(function () {
+            this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+        })
+    })
+    $('#viewer-data-creater .ensure').click(function(){
+        var fields={}
+        $('#viewer-data-creater textarea').each(function(){
+            var field=$(this).attr('field')
+            var value=$(this).val()
+            if(value !== ''){
+                fields[field]=($.viewerData.io(field).out(value)).toString()
+            }
+        })
+        var data={'fields':JSON.stringify(fields),'viewer-id':$.viewerData.getVid()}
+        $.ajax({
+            url:'/api/viewerdata',
+            method:'POST',
+            async:false,
+            cache:false,
+            data:data,
+            success:function(data){
+                $('#viewer-data-creater').modal('hide')
+                message(data['msg'],'success')
+                $.viewerData.flush()
+            },
+            error:function(err){
+                message(err['responseJSON']['msg'],'danger')
+            }
+        })
+    })
+</script>
+<div class="modal fade" id="viewer-data-searcher" tabindex="-1" role="dialog" aria-labelledby="搜索" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="header-title">搜索</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"><form vid=""></form></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure">确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#viewer-data-searcher').on('shown.bs.modal', function () {
+        $('#viewer-data-searcher textarea').each(function () {
+            this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+        })
+    })
+    $('#viewer-data-searcher .ensure').click(function(){
+        var data=[]
+        var group=$('#viewer-data-searcher .form-group')
+        for(var i=0;i<group.length;i++){
+            var textArea=$(group[i]).children('textarea')
+            var selector=$(group[i]).children("select")
+            var name=textArea.attr('name')
+            var value=textArea.val()
+            if(value===''){
+                continue
+            }
+            var field={}
+            field['name']=name
+            field['value']=($.viewerData.io(name).out(value)).toString()
+            field['relation']=selector.val()
+            data.push(field)
+        }
+        var vid= $.viewerData.getVid()
+        $.viewerData.get(vid,data)
+        $('#viewer-data-searcher').modal('hide')
+    })
+</script>
+<div class="modal fade" id="viewer-data-script-editer" tabindex="-1" role="dialog" aria-labelledby="搜索" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content  bg-success">
+            <div class="modal-header">
+                <h6 class="header-title">脚本</h6>
+                <br>格式:<br>
+                {<br>
+                    in:function(data){var re=data+1;return re},<br>
+                    out:function(data){var re=data/2;return re}<br>
+                }<br>
+                in表示将数据库原始数据转换成方便用户看的格式的函数,向用户展示数据前调用<br>out表示将方便用户看的格式的数据转换成服务器需要格式的函数,向服务器提交数据前调用<br>data参数是数据库原始数据
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body"><form>
+                <textarea class="form-control" rows="8" script-id=""></textarea>
+            </form></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary ensure">确定</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#viewer-data-script-editer').on('shown.bs.modal', function () {
+        $('#viewer-data-script-editer textarea').each(function () {
+            this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+        }).on('input', function () {
+            this.style.height = 'auto'
+            this.style.height = (this.scrollHeight) + 'px'
+        })
+    })
+    $('#viewer-data-script-editer .ensure').click(function(){
+        var textArea=$('#viewer-data-script-editer textarea')
+        var scriptID=textArea.attr('script-id')
+        var script=textArea.val()
+        $('#'+scriptID).val(script)
+        var e=$('#viewer-item-editer button[script-id="'+scriptID+'"]')
+        if(script !==''){
+            e.removeClass('btn-primary')
+            e.addClass('btn-danger')
+        }else{
+            e.removeClass('btn-danger')
+            e.addClass('btn-primary')
+        }
+        $('#viewer-data-script-editer').modal('hide')
+    })
+    $('#viewer-data-script-editer').on('hidden.bs.modal', function () {
+        $('#viewer-item-editer').modal({focus:true})
+    })
+</script>
+{{- end}}
+{{- end}}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>后台管理系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        #viewer-head, #search-bar {
+            height: 80px;
+        }
+
+        #search-bar button {
+            margin-right: 15px;
+        }
+
+
+        #main-table td {
+            vertical-align: middle;
+        }
+
+        .td-content:hover {
+            color: #dc3545;
+        }
+        td{
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+        }
+    </style>
+    <script>
+        String.prototype.format = function () {
+            var values = arguments;
+            return this.replace(/\{(\d+)\}/g, function (match, index) {
+                if (values.length > index) {
+                    return values[index];
+                } else {
+                    return "";
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+<script>
+    function randomString(length, chars) {
+        var result = '';
+        for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+        return result;
+    }
+
+    function message(text, status) {
+        var msgID = randomString(8, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        var h = '<div id="{0}" class="alert alert-{1} alert-dismissible fade show fixed-top col-xl-2 col-lg-3 col-md-6 m-auto" style="z-index: 2000">{2}</div>'.format(msgID, status, text);
+        $('body').prepend(h);
+        setTimeout(function () {
+            $('#' + msgID).alert('close')
+        }, 2000);
+    }
+</script>
+{{template "modal" .}}
+<div class="container-fluid h-100">
+    <div class="row h-100">
+        <div id="left-menu-bar" class="col-lg-2 col-3 bg-dark" status="show">
+            {{template "left-menu" .}}
+        </div>
+        <div id="main-viewer" class="col-lg-10 col-9">
+            <div class="row">
+                <div id="viewer-head" class="col-12">
+                    {{template "viewer-head" .}}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 bg-dark"></div>
+            </div>
+            <div class="row">
+                <div id="viewer-body" class="col-12">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="clearfix table-operator"></div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="table-responsive">
+                                        <table id="main-table"
+                                               class="table table-bordered table-striped table-hover">
+                                            <thead class="bg-warning">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>First</th>
+                                                <th>Second</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <th>1</th>
+                                                <td>Javascript</td>
+                                                <td>Python</td>
+                                            </tr>
+                                            <tr>
+                                                <th>2</th>
+
+                                                <td>CSS</td>
+                                                <td>Bootstrap</td>
+                                            </tr>
+                                            <tr>
+                                                <th>3</th>
+                                                <td>npm</td>
+                                                <td>nodejs</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#data-deleter').click(function () {
+        var data = []
+        var checker = $('.row-checker')
+        for (var i = 0; i < checker.length; i++) {
+            var c = $(checker[i])
+            if (c.is(':checked')) {
+                var row = c.parent().parent()
+                var primaryTd = row.children('td[col="' + $.viewerData.primaryName() + '"]')
+                var primary = primaryTd.children('span')
+                data.push(($.viewerData.io($.viewerData.primaryName()).out(primary.html())).toString())
+            }
+        }
+        $.ajax({
+            url: '/api/viewerdata?' + 'param=' + JSON.stringify(data) + '&viewer-id=' + $.viewerData.getVid(),
+            method: 'DELETE',
+            sync: 'false',
+            cache: 'false',
+            success: function (data) {
+                message('删除成功', 'success')
+                $.viewerData.flush()
+            },
+            error: function (err) {
+                message(err.responseJSON.msg, 'danger')
+            }
+        })
+    })
+    $('#data-adder').click(function () {
+        var fields = $.viewerData.getFields()
+        if (fields == null) {
+            return
+        }
+        var data = []
+        for (var i = 0; i < fields.length; i++) {
+            data.push(fields[i]['name'])
+        }
+        $.itemEditer.creater(data)
+    })
+    $('#data-searcher').click(function(){
+        var fields = $.viewerData.getInfo()
+        if (fields == null) {
+            return
+        }
+        $.itemEditer.searcher(fields)
+    })
+    $('#clear-filter').click(function(){
+        $.viewerData.clearFilter()
+    })
+</script>
+<script src="/static/js/ui.min.js"></script>
+</body>
+</html>

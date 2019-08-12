@@ -1,0 +1,1 @@
+go build -o $GOPATH/src/github.com/qianlidongfeng/project/cms/bin/cms $GOPATH/src/github.com/qianlidongfeng/project/cms/*.go
