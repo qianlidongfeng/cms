@@ -4,30 +4,19 @@
     <meta charset="UTF-8">
     <title>后台管理系统</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/css/bootstrap.min.css">
-    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
-    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <style>
         html, body {
             height: 100%;
         }
-
-        #viewer-head, #search-bar {
+        #viewer-head {
             height: 80px;
         }
-
         #search-bar button {
             margin-right: 15px;
         }
-
-
         #main-table td {
             vertical-align: middle;
-        }
-
-        .td-content:hover {
-            color: #dc3545;
         }
         td{
             white-space: nowrap;
@@ -48,6 +37,7 @@
             });
         };
     </script>
+    <script src="/static/js/jquery.min.js"></script>
 </head>
 <body>
 <script>
@@ -176,6 +166,8 @@
         $.viewerData.clearFilter()
     })
 </script>
+<script src="/static/js/popper.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/ui.min.js"></script>
 </body>
 </html>
